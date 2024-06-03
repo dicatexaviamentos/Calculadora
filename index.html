@@ -142,31 +142,45 @@
         }
 
         function appendCharacter(char) {
-            if (shouldResetDisplay || display.textContent === 'Erro') {
-                display.textContent = '';
-                shouldResetDisplay = false;
-            }
+    if (shouldResetDisplay || display.textContent === 'Erro') {
+        display.textContent = '';
+        shouldResetDisplay = false;
+    }
 
-            if (display.textContent === '0') {
-                display.textContent = char;
-            } else {
-                display.textContent += char;
-            }
-        }
+    if (display.textContent === '0') {
+        display.textContent = char;
+    } else {
+        display.textContent += char;
+    }
 
-        function calculateResult() {
-            try {
-                const expression = previousResult !== null ? previousResult + display.textContent : display.textContent;
-                const result = eval(expression);
-                display.textContent = result;
-                history += `${expression} = ${result}\n`;
-                previousResult = result;
-                shouldResetDisplay = true;
-            } catch (error) {
-                display.textContent = 'Erro';
-                shouldResetDisplay = true;
-            }
-        }
+    // Atualiza o histórico
+    history += char;
+    updateHistory();
+}
+
+function updateHistory() {
+    const historyElement = document.getElementById('history');
+    historyElement.textContent = history;
+    historyElement.scrollTop = historyElement.scrollHeight; // Rola para baixo automaticamente
+}
+
+
+function calculateResult() {
+    try {
+        const expression = previousResult !== null ? previousResult + display.textContent : display.textContent;
+        const result = eval(expression);
+        display.textContent = result;
+        history += `${result}\n`; // Apenas o resultado é adicionado ao histórico
+        previousResult = result;
+        shouldResetDisplay = true;
+        updateHistory(); // Atualiza o histórico após o cálculo
+    } catch (error) {
+        display.textContent = 'Erro';
+        shouldResetDisplay = true;
+    }
+}
+
+
 
         document.addEventListener('keydown', (event) => {
             const key = event.key;
