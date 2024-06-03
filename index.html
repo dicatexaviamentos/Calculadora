@@ -37,6 +37,20 @@
             white-space: nowrap;
         }
 
+        .history {
+            height: 478px;
+            width: 280px;
+            margin-left: 20px;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            margin-bottom: 5px;
+        }
+
         .buttons {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -99,14 +113,19 @@
             <button class="equal" onclick="calculateResult()">=</button>
         </div>
     </div>
+    <div class="history" id="history"></div>
+    </div>
 
     <script>
         const display = document.getElementById('display');
         let shouldResetDisplay = false;
+        let previousResult = null;
+        let history = '';
 
         function clearDisplay() {
             display.textContent = '0';
             shouldResetDisplay = false;
+            history = '';
         }
 
         function deleteLast() {
@@ -123,7 +142,7 @@
         }
 
         function appendCharacter(char) {
-            if (shouldResetDisplay) {
+            if (shouldResetDisplay || display.textContent === 'Erro') {
                 display.textContent = '';
                 shouldResetDisplay = false;
             }
@@ -137,7 +156,11 @@
 
         function calculateResult() {
             try {
-                display.textContent = eval(display.textContent);
+                const expression = previousResult !== null ? previousResult + display.textContent : display.textContent;
+                const result = eval(expression);
+                display.textContent = result;
+                history += `${expression} = ${result}\n`;
+                previousResult = result;
                 shouldResetDisplay = true;
             } catch (error) {
                 display.textContent = 'Erro';
@@ -161,8 +184,10 @@
         function clearDisplay() {
             display.textContent = '0';
             shouldResetDisplay = false;
+            previousResult = null; // Limpa o resultado anterior
             document.getElementById('clearButton').blur();
         }
+
 
 
     </script>
