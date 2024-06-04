@@ -1,293 +1,208 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dicatex  - Calculadora</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f4f4f4;
+    }
 
-        .calculator {
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            background-color: white;
-            padding: 20px;
-            width: 280px;
-        }
+    .calculator {
+        width: 7cm; /* Definindo a largura do papel */
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+    }
 
-        .display {
-            height: 50px;
-            background-color: #222;
-            color: white;
-            text-align: right;
-            padding: 10px;
-            font-size: 2em;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            overflow-x: auto;
-            white-space: nowrap;
-        }
+    .display {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        font-size: 15px;
+        text-align: right;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        max-height: calc(100vh - 160px); /* Definindo a altura máxima ajustável */
+    }
 
-        .history {
-            height: 478px;
-            width: 280px;
-            margin-left: 20px;
-            background-color: #f9f9f9;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-y: auto;
-            /* Fonte matricial */
-            font-size: 1.2em;
-        }
+    .operations {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 10px;
+        text-align: right;
+    }
 
-        .history-item div {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 5px;
-            padding: 5px;
-            background-color: #f1f1f1;
-            border-radius: 5px;
-        }
+    button {
+        width: 40px; /* Reduzindo a largura dos botões */
+        height: 40px; /* Reduzindo a altura dos botões */
+        font-size: 16px; /* Reduzindo o tamanho da fonte dos botões */
+        margin: 2px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        background-color: #f0f0f0;
+        transition: background-color 0.3s ease;
+    }
 
-        .history-item button {
-            background-color: #ff4d4d;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            padding: 5px 10px;
-        }
+    button:hover {
+        background-color: #e0e0e0;
+    }
 
-        .history-item button:hover {
-            background-color: #ff0000;
-        }
+    .button-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2px; /* Reduzindo o espaçamento entre os botões */
+    }
+    @media print {
+    body * {
+        visibility: hidden;
+    }
+    #operations, #operations * {
+        visibility: visible;
+        border: none !important;
+    }
+    #operations {
+        position: absolute;
+        width: 7cm;
+        height: auto;
+        left: 0;
+        top: 0;
+        overflow: visible !important; /* Removendo a barra de rolagem */
+    }
+    .calculator {
+        width: 7cm; /* Definindo a largura do papel */
+    }
+}
 
-        .history-item .negative {
-            color: red;
-        }
 
-        .buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-
-        .buttons button {
-            width: 100%;
-            padding: 20px;
-            font-size: 1.5em;
-            border: none;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-            cursor: pointer;
-            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        .buttons button.operator {
-            background-color: #ff8c00;
-            color: white;
-        }
-
-        .buttons button.equal {
-            background-color: #4caf50;
-            color: white;
-            grid-column: span 2;
-            /* Ocupa duas colunas */
-            font-size: 1.5em;
-        }
-
-        .buttons button.zero {
-            grid-column: span 2;
-            /* Ocupa duas colunas */
-            font-size: 1.5em;
-        }
-    </style>
+</style>
 </head>
-
 <body>
-    <div class="calculator">
-        <div id="display" class="display">0</div>
-        <div class="buttons">
-            <button id="clearButton" onclick="clearDisplay()">C</button>
-            <button onclick="deleteLast()">←</button>
-            <button onclick="appendCharacter('/')">/</button>
-            <button onclick="appendCharacter('*')">*</button>
-            <button onclick="appendCharacter('7')">7</button>
-            <button onclick="appendCharacter('8')">8</button>
-            <button onclick="appendCharacter('9')">9</button>
-            <button onclick="appendCharacter('-')">-</button>
-            <button onclick="appendCharacter('4')">4</button>
-            <button onclick="appendCharacter('5')">5</button>
-            <button onclick="appendCharacter('6')">6</button>
-            <button onclick="appendCharacter('+')">+</button>
-            <button onclick="appendCharacter('1')">1</button>
-            <button onclick="appendCharacter('2')">2</button>
-            <button onclick="appendCharacter('3')">3</button>
-            <button onclick="appendCharacter('.')">.</button>
-            <button class="zero" onclick="appendCharacter('0')">0</button>
-            <button class="equal" onclick="calculateResult()">=</button>
-        </div>
+
+<div class="calculator">
+    <div class="display" id="operations" style="height: 250px; overflow-y: auto;" onscroll="scrollToBottom()"></div>
+    <div class="display" id="result">0</div>
+    
+    <div class="button-grid">
+        <button onclick="appendNumber('7')">7</button>
+        <button onclick="appendNumber('8')">8</button>
+        <button onclick="appendNumber('9')">9</button>
+        <button onclick="appendOperator('+')">+</button>
+        <button onclick="appendNumber('4')">4</button>
+        <button onclick="appendNumber('5')">5</button>
+        <button onclick="appendNumber('6')">6</button>
+        <button onclick="appendOperator('-')">-</button>
+        <button onclick="appendNumber('1')">1</button>
+        <button onclick="appendNumber('2')">2</button>
+        <button onclick="appendNumber('3')">3</button>
+        <button onclick="appendOperator('*')">*</button>
+        <button onclick="clearHistory()">C</button>
+        <button onclick="appendNumber('0')">0</button>
+        <button onclick="calculate()">=</button>
+        <button onclick="appendOperator('/')">/</button>
     </div>
-    <div class="history" id="history"></div>
+</div>
 
-    <script>
-        const display = document.getElementById('display');
-        let shouldResetDisplay = false;
-        let previousResult = null;
-        let history = '';
+<script>
+   let currentOperation = '';
+let previousOperations = ''; // Variável para armazenar o histórico antes do separador
+let operations = '';
+let result = 0;
 
-        function clearDisplay() {
-            display.textContent = '0';
-            shouldResetDisplay = false;
-            history = '';
-            updateHistory(); // Limpa o histórico na tela
-        }
 
-        function deleteLast() {
-            if (shouldResetDisplay) {
-                display.textContent = '0';
-                shouldResetDisplay = false;
+
+function appendNumber(number) {
+    document.getElementById('result').innerText =
+        document.getElementById('result').innerText === '0' ? number : document.getElementById('result').innerText + number;
+}
+
+function appendOperator(operator) {
+    currentOperation += document.getElementById('result').innerText + ' ' + operator + ' ';
+    operations += currentOperation + '\n';
+    document.getElementById('operations').innerText = previousOperations + operations; // Atualizando o histórico completo
+    document.getElementById('result').innerText = '0';
+    currentOperation = '';
+}
+
+
+
+
+
+
+function calculate() {
+    currentOperation += document.getElementById('result').innerText;
+    operations += currentOperation + '\n';
+    result = eval(operations); // Calculando o resultado
+    previousOperations += operations + '\n' + result + ' T\n====================\n\n\n'; // Adicionando ao histórico antes do separador
+    document.getElementById('operations').innerText = previousOperations; // Atualizando o histórico completo
+    document.getElementById('result').innerText = result;
+    currentOperation = '';
+    operations = '';
+}
+
+
+document.addEventListener('keydown', function(event) {
+    const key = event.key;
+    if (!isNaN(key) || key === '.' || key === '+' || key === '-' || key === '*' || key === '/') {
+        if (!event.shiftKey && key !== ' ') {
+            if (!isNaN(key)) {
+                appendNumber(key);
             } else {
-                if (display.textContent.length > 1) {
-                    display.textContent = display.textContent.slice(0, -1);
-                } else {
-                    display.textContent = '0';
+                switch (key) {
+                    case '+':
+                        appendOperator('+');
+                        break;
+                    case '-':
+                        appendOperator('-');
+                        break;
+                    case '*':
+                        appendOperator('*');
+                        break;
+                    case '/':
+                        appendOperator('/');
+                        break;
+                    case '.':
+                        appendNumber('.');
+                        break;
                 }
             }
         }
+    } else if (key === 'Enter') {
+        event.preventDefault();
+        calculate();
+    } else if (key === 'Escape') {
+        clearResult();
+    } else if (key === 'C') { // Adicionando a verificação para a tecla "c"
+        clearHistory(); // Chamando a função para limpar o histórico
+    }
+});
 
-        function appendCharacter(char) {
-            if (shouldResetDisplay || display.textContent === 'Erro') {
-                display.textContent = '';
-                shouldResetDisplay = false;
-            }
 
-            if (display.textContent === '0') {
-                display.textContent = char;
-            } else {
-                display.textContent += char;
-            }
-        }
+function clearHistory() {
+    document.getElementById('operations').innerText = ''; // Limpa o histórico
+    document.getElementById('result').innerText = '0';
+    currentOperation = ''; // Reinicia a operação atual
+    operations = ''; // Reinicia o histórico completo
+    location.reload(); // Reinicia completamente a página
+}
 
-        function updateHistory() {
-            const historyElement = document.getElementById('history');
-            historyElement.innerHTML = '';
 
-            const historyItems = history.split('<br>---------<br>');
-            historyItems.forEach((item, itemIndex) => {
-                if (item.trim() !== '') {
-                    const div = document.createElement('div');
-                    div.className = 'history-item';
-                    const values = item.split(/(?=[+\-*/])/); // Separa valores e sinais de operação
-                    div.innerHTML = values.map((value, valueIndex) => {
-                        if (value.includes('= R$')) {
-                            return `<div>${value}</div>`; // Resultado final sem botão de exclusão
-                        } else {
-                            const isNegative = value.includes('-');
-                            const valueClass = isNegative ? 'negative' : '';
-                            return `<div class="${valueClass}">${value} <button onclick="deleteHistoryItem(${itemIndex}, ${valueIndex})">Excluir</button></div>`;
-                        }
-                    }).join('');
-                    historyElement.appendChild(div);
-                }
-            });
-        }
 
-        function deleteHistoryItem(itemIndex, valueIndex) {
-            const historyItems = history.split('<br>---------<br>');
-            const values = historyItems[itemIndex].split(/(?=[+\-*/])/);
-            values.splice(valueIndex, 1);
-            historyItems[itemIndex] = values.join('');
 
-            // Remove operações vazias do histórico
-            history = historyItems.filter(item => item.trim() !== '').join('<br>---------<br>');
-            updateHistory();
+</script>
 
-            // Recalcula o resultado total baseado no histórico atualizado
-            recalculateResult();
-        }
 
-        function recalculateResult() {
-            try {
-                let expression = '';
-                const historyItems = history.split('<br>---------<br>');
-                historyItems.forEach(item => {
-                    const values = item.split(/(?=[+\-*/])/).filter(value => !value.includes('= R$'));
-                    values.forEach(value => {
-                        if (value.startsWith('R$ ')) {
-                            expression += parseFloat(value.replace('R$ ', '').replace(/\./g, '').replace(',', '.')) + ' ';
-                        } else {
-                            expression += value + ' ';
-                        }
-                    });
-                });
-                const result = eval(expression.trim());
-                display.textContent = 'R$ ' + result.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                previousResult = result;
-            } catch (error) {
-                display.textContent = 'Erro';
-                previousResult = null;
-            }
-        }
-
-        function calculateResult() {
-            try {
-                const expression = previousResult !== null ? previousResult + display.textContent : display.textContent;
-                const result = eval(expression);
-                const valuesAndOperators = expression.split(/(?=[+\-*/])|(?<=[+\-*/])/); // Separa valores e sinais de operação
-                const formattedValues = valuesAndOperators.map(value => {
-                    if (!isNaN(value) && value.trim() !== '') {
-                        return 'R$ ' + parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                    } else {
-                        return value;
-                    }
-                });
-
-                display.textContent = 'R$ ' + result.toLocaleString('pt-BR', { minimumFractionDigits: 2 }); // Formata o resultado para moeda brasileira
-                if (history !== '') {
-                    history += '<br>---------<br>'; // Adiciona linha separadora antes do resultado
-                }
-                history += formattedValues.join(' '); // Adiciona valores e sinais ao histórico na mesma linha
-                history += `<br>---------<br>= R$ ${result.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`; // Adiciona o resultado ao histórico
-                previousResult = result;
-                shouldResetDisplay = true;
-                updateHistory(); // Atualiza o histórico
-            } catch (error) {
-                display.textContent = 'Erro';
-                shouldResetDisplay = true;
-            }
-        }
-
-        document.addEventListener('keydown', (event) => {
-            const key = event.key;
-            if ((key >= '0' && key <= '9') || key === '.' || key === '/' || key === '*' || key === '-' || key === '+') {
-                appendCharacter(key);
-            } else if (key === 'Enter') {
-                calculateResult();
-            } else if (key === 'Backspace') {
-                deleteLast();
-            } else if (key === 'Escape' || key === 'c' || key === 'C') {
-                clearDisplay();
-            }
-        });
-
-        function clearDisplay() {
-            display.textContent = '0';
-            shouldResetDisplay = false;
-            previousResult = null; // Limpa o resultado anterior
-            document.getElementById('clearButton').blur();
-        }
-    </script>
 </body>
-
 </html>
