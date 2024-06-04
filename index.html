@@ -45,12 +45,35 @@
             padding: 10px;
             border-radius: 5px;
             overflow-y: auto;
-            font-family: "Courier New", Courier, monospace; /* Fonte matricial */
+            /* Fonte matricial */
             font-size: 1.2em;
         }
 
-        .history-item {
+        .history-item div {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 5px;
+            padding: 5px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+        }
+
+        .history-item button {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        .history-item button:hover {
+            background-color: #ff0000;
+        }
+
+        .history-item .negative {
+            color: red;
         }
 
         .buttons {
@@ -116,7 +139,6 @@
         </div>
     </div>
     <div class="history" id="history"></div>
-   
 
     <script>
         const display = document.getElementById('display');
@@ -159,40 +181,91 @@
 
         function updateHistory() {
             const historyElement = document.getElementById('history');
-            historyElement.innerHTML = history.replace(/\n/g, "<br>"); // Substitui todas as quebras de linha por <br>
+            historyElement.innerHTML = '';
+
+            const historyItems = history.split('<br>---------<br>');
+            historyItems.forEach((item, itemIndex) => {
+                if (item.trim() !== '') {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    const values = item.split(/(?=[+\-*/])/); // Separa valores e sinais de operação
+                    div.innerHTML = values.map((value, valueIndex) => {
+                        if (value.includes('= R$')) {
+                            return `<div>${value}</div>`; // Resultado final sem botão de exclusão
+                        } else {
+                            const isNegative = value.includes('-');
+                            const valueClass = isNegative ? 'negative' : '';
+                            return `<div class="${valueClass}">${value} <button onclick="deleteHistoryItem(${itemIndex}, ${valueIndex})">Excluir</button></div>`;
+                        }
+                    }).join('');
+                    historyElement.appendChild(div);
+                }
+            });
+        }
+
+        function deleteHistoryItem(itemIndex, valueIndex) {
+            const historyItems = history.split('<br>---------<br>');
+            const values = historyItems[itemIndex].split(/(?=[+\-*/])/);
+            values.splice(valueIndex, 1);
+            historyItems[itemIndex] = values.join('');
+
+            // Remove operações vazias do histórico
+            history = historyItems.filter(item => item.trim() !== '').join('<br>---------<br>');
+            updateHistory();
+
+            // Recalcula o resultado total baseado no histórico atualizado
+            recalculateResult();
+        }
+
+        function recalculateResult() {
+            try {
+                let expression = '';
+                const historyItems = history.split('<br>---------<br>');
+                historyItems.forEach(item => {
+                    const values = item.split(/(?=[+\-*/])/).filter(value => !value.includes('= R$'));
+                    values.forEach(value => {
+                        if (value.startsWith('R$ ')) {
+                            expression += parseFloat(value.replace('R$ ', '').replace(/\./g, '').replace(',', '.')) + ' ';
+                        } else {
+                            expression += value + ' ';
+                        }
+                    });
+                });
+                const result = eval(expression.trim());
+                display.textContent = 'R$ ' + result.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                previousResult = result;
+            } catch (error) {
+                display.textContent = 'Erro';
+                previousResult = null;
+            }
         }
 
         function calculateResult() {
             try {
                 const expression = previousResult !== null ? previousResult + display.textContent : display.textContent;
                 const result = eval(expression);
-                const values = expression.split(/(?=[+\-*/])/); // Separa os valores e os sinais da expressão
-                const formattedValues = values.map(value => {
-                    if (!isNaN(value)) {
+                const valuesAndOperators = expression.split(/(?=[+\-*/])|(?<=[+\-*/])/); // Separa valores e sinais de operação
+                const formattedValues = valuesAndOperators.map(value => {
+                    if (!isNaN(value) && value.trim() !== '') {
                         return 'R$ ' + parseFloat(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
                     } else {
                         return value;
                     }
                 });
-                const formattedExpression = formattedValues.join('<br>'); // Formata os valores e os sinais separados por quebra de linha
+
                 display.textContent = 'R$ ' + result.toLocaleString('pt-BR', { minimumFractionDigits: 2 }); // Formata o resultado para moeda brasileira
                 if (history !== '') {
                     history += '<br>---------<br>'; // Adiciona linha separadora antes do resultado
                 }
-                history += `${formattedExpression}<br>---------<br>= R$ ${result.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`; // Adiciona expressão formatada e resultado ao histórico
+                history += formattedValues.join(' '); // Adiciona valores e sinais ao histórico na mesma linha
+                history += `<br>---------<br>= R$ ${result.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`; // Adiciona o resultado ao histórico
                 previousResult = result;
                 shouldResetDisplay = true;
                 updateHistory(); // Atualiza o histórico
             } catch (error) {
                 display.textContent = 'Erro';
-                shouldResetDisplay
- = true;
+                shouldResetDisplay = true;
             }
-        }
-
-        function clearHistory() {
-            history = ''; // Limpa o histórico
-            updateHistory(); // Limpa o histórico na tela
         }
 
         document.addEventListener('keydown', (event) => {
@@ -214,7 +287,6 @@
             previousResult = null; // Limpa o resultado anterior
             document.getElementById('clearButton').blur();
         }
-
     </script>
 </body>
 
