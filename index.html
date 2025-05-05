@@ -1,208 +1,210 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dicatex  - Calculadora</title>
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-        background-color: #f4f4f4;
-    }
-
-    .calculator {
-        width: 7cm; /* Definindo a largura do papel */
-        background-color: #fff;
-        border-radius: 10px;
-        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        padding: 20px;
-    }
-
-    .display {
-        background-color: #f9f9f9;
-        border: 1px solid #ddd;
-        padding: 10px;
-        border-radius: 5px;
-        margin-bottom: 10px;
-        font-size: 15px;
-        text-align: right;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        max-height: calc(100vh - 160px); /* Definindo a altura máxima ajustável */
-    }
-
-    .operations {
-        color: #666;
-        font-size: 14px;
-        margin-bottom: 10px;
-        text-align: right;
-    }
-
-    button {
-        width: 40px; /* Reduzindo a largura dos botões */
-        height: 40px; /* Reduzindo a altura dos botões */
-        font-size: 16px; /* Reduzindo o tamanho da fonte dos botões */
-        margin: 2px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        background-color: #f0f0f0;
-        transition: background-color 0.3s ease;
-    }
-
-    button:hover {
-        background-color: #e0e0e0;
-    }
-
-    .button-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 2px; /* Reduzindo o espaçamento entre os botões */
-    }
-    @media print {
-    body * {
-        visibility: hidden;
-    }
-    #operations, #operations * {
-        visibility: visible;
-        border: none !important;
-    }
-    #operations {
-        position: absolute;
-        width: 7cm;
-        height: auto;
-        left: 0;
-        top: 0;
-        overflow: visible !important; /* Removendo a barra de rolagem */
-    }
-    .calculator {
-        width: 7cm; /* Definindo a largura do papel */
-    }
-}
-
-
-</style>
+  <meta charset="UTF-8">
+  <title>Conferência de Caixas</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    input, button { margin: 5px; padding: 8px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+  </style>
 </head>
 <body>
+  <h2>Cadastro de Códigos</h2>
+  <input type="text" id="nome" placeholder="Nome do Produto">
+  <input type="text" id="codigo" placeholder="Código de Barras">
+  <button onclick="cadastrarProduto()">Cadastrar</button>
+  <button onclick="limparProdutos()">Limpar Produtos Cadastrados</button>
 
-<div class="calculator">
-    <div class="display" id="operations" style="height: 250px; overflow-y: auto;" onscroll="scrollToBottom()"></div>
-    <div class="display" id="result">0</div>
-    
-    <div class="button-grid">
-        <button onclick="appendNumber('7')">7</button>
-        <button onclick="appendNumber('8')">8</button>
-        <button onclick="appendNumber('9')">9</button>
-        <button onclick="appendOperator('+')">+</button>
-        <button onclick="appendNumber('4')">4</button>
-        <button onclick="appendNumber('5')">5</button>
-        <button onclick="appendNumber('6')">6</button>
-        <button onclick="appendOperator('-')">-</button>
-        <button onclick="appendNumber('1')">1</button>
-        <button onclick="appendNumber('2')">2</button>
-        <button onclick="appendNumber('3')">3</button>
-        <button onclick="appendOperator('*')">*</button>
-        <button onclick="clearHistory()">C</button>
-        <button onclick="appendNumber('0')">0</button>
-        <button onclick="calculate()">=</button>
-        <button onclick="appendOperator('/')">/</button>
-    </div>
-</div>
+  <h2>Importar Planilha de Produtos</h2>
+  <input type="file" id="importarExcel" accept=".xlsx, .xls">
+  <button onclick="exportarPadrao()">Exportar Planilha Padrão</button>
 
-<script>
-   let currentOperation = '';
-let previousOperations = ''; // Variável para armazenar o histórico antes do separador
-let operations = '';
-let result = 0;
+  <h2>Conferência</h2>
+  <label>Múltiplo por leitura: <input type="number" id="multiplo" value="1" min="1"></label>
+  <input type="text" id="scanner" placeholder="Use o leitor aqui" autofocus>
 
+  <h3>Resumo de Leitura</h3>
+  <button onclick="limparConferencia()">Limpar Conferência</button>
+  <button onclick="desfazerUltimaLeitura()">Desfazer Última Interação</button>
+  <table id="tabelaConferencia">
+    <thead>
+      <tr><th>Nome</th><th>Código</th><th>Quantidade</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
+  <h3>Exportações</h3>
+  <button onclick="exportarConferencia()">Exportar Conferência Final</button>
+  <button onclick="exportarConferidos()">Exportar Apenas Conferidos</button>
 
-function appendNumber(number) {
-    document.getElementById('result').innerText =
-        document.getElementById('result').innerText === '0' ? number : document.getElementById('result').innerText + number;
-}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    let produtos = {};
+    let ultimaLeitura = null;
+    const tabela = document.querySelector('#tabelaConferencia tbody');
 
-function appendOperator(operator) {
-    currentOperation += document.getElementById('result').innerText + ' ' + operator + ' ';
-    operations += currentOperation + '\n';
-    document.getElementById('operations').innerText = previousOperations + operations; // Atualizando o histórico completo
-    document.getElementById('result').innerText = '0';
-    currentOperation = '';
-}
+    // Carrega dados salvos
+    window.onload = () => {
+      const dadosSalvos = localStorage.getItem("produtos");
+      if (dadosSalvos) {
+        produtos = JSON.parse(dadosSalvos);
+        atualizarTabela();
+      }
+    };
 
-
-
-
-
-
-function calculate() {
-    currentOperation += document.getElementById('result').innerText;
-    operations += currentOperation + '\n';
-    result = eval(operations); // Calculando o resultado
-    previousOperations += operations + '\n' + result + ' T\n====================\n\n\n'; // Adicionando ao histórico antes do separador
-    document.getElementById('operations').innerText = previousOperations; // Atualizando o histórico completo
-    document.getElementById('result').innerText = result;
-    currentOperation = '';
-    operations = '';
-}
-
-
-document.addEventListener('keydown', function(event) {
-    const key = event.key;
-    if (!isNaN(key) || key === '.' || key === '+' || key === '-' || key === '*' || key === '/') {
-        if (!event.shiftKey && key !== ' ') {
-            if (!isNaN(key)) {
-                appendNumber(key);
-            } else {
-                switch (key) {
-                    case '+':
-                        appendOperator('+');
-                        break;
-                    case '-':
-                        appendOperator('-');
-                        break;
-                    case '*':
-                        appendOperator('*');
-                        break;
-                    case '/':
-                        appendOperator('/');
-                        break;
-                    case '.':
-                        appendNumber('.');
-                        break;
-                }
-            }
-        }
-    } else if (key === 'Enter') {
-        event.preventDefault();
-        calculate();
-    } else if (key === 'Escape') {
-        clearResult();
-    } else if (key === 'C') { // Adicionando a verificação para a tecla "c"
-        clearHistory(); // Chamando a função para limpar o histórico
+    function salvarDados() {
+      localStorage.setItem("produtos", JSON.stringify(produtos));
     }
-});
 
+    function cadastrarProduto() {
+      const nome = document.getElementById('nome').value.trim();
+      const codigo = document.getElementById('codigo').value.trim();
+      if (!nome || !codigo) return alert("Preencha todos os campos!");
 
-function clearHistory() {
-    document.getElementById('operations').innerText = ''; // Limpa o histórico
-    document.getElementById('result').innerText = '0';
-    currentOperation = ''; // Reinicia a operação atual
-    operations = ''; // Reinicia o histórico completo
-    location.reload(); // Reinicia completamente a página
-}
+      if (!produtos[codigo]) {
+        produtos[codigo] = { nome, quantidade: 0 };
+        atualizarTabela();
+        salvarDados();
+      } else {
+        alert("Código já cadastrado!");
+      }
 
+      document.getElementById('nome').value = "";
+      document.getElementById('codigo').value = "";
+    }
 
+    function atualizarTabela() {
+      tabela.innerHTML = '';
+      for (const codigo in produtos) {
+        const { nome, quantidade } = produtos[codigo];
+        tabela.innerHTML += `<tr><td>${nome}</td><td>${codigo}</td><td>${quantidade}</td></tr>`;
+      }
+    }
 
+    function lerCodigo() {
+      const input = document.getElementById('scanner');
+      const codigo = input.value.trim();
+      const multiplo = parseInt(document.getElementById('multiplo').value) || 1;
 
-</script>
+      if (codigo && produtos[codigo]) {
+        produtos[codigo].quantidade += multiplo;
+        ultimaLeitura = { codigo, quantidade: multiplo };
+        atualizarTabela();
+        salvarDados();
+      } else if (codigo) {
+        alert("Código não cadastrado!");
+      }
 
+      input.value = '';
+    }
 
+    function desfazerUltimaLeitura() {
+      if (!ultimaLeitura) {
+        alert("Nenhuma leitura para desfazer.");
+        return;
+      }
+
+      const { codigo, quantidade } = ultimaLeitura;
+
+      if (produtos[codigo]) {
+        produtos[codigo].quantidade -= quantidade;
+        if (produtos[codigo].quantidade < 0) produtos[codigo].quantidade = 0;
+        atualizarTabela();
+        salvarDados();
+        alert(`Leitura do código ${codigo} desfeita.`);
+      }
+
+      ultimaLeitura = null;
+    }
+
+    function exportarPadrao() {
+      const data = [["Nome", "Código"]];
+      for (const codigo in produtos) {
+        data.push([produtos[codigo].nome, codigo]);
+      }
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Produtos");
+      XLSX.writeFile(wb, "planilha_padrao.xlsx");
+    }
+
+    function exportarConferencia() {
+      const data = [["Nome", "Código", "Quantidade"]];
+      for (const codigo in produtos) {
+        const { nome, quantidade } = produtos[codigo];
+        data.push([nome, codigo, quantidade]);
+      }
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Conferencia");
+      XLSX.writeFile(wb, "conferencia_final.xlsx");
+    }
+
+    function exportarConferidos() {
+      const data = [["Nome", "Código", "Quantidade"]];
+      for (const codigo in produtos) {
+        const { nome, quantidade } = produtos[codigo];
+        if (quantidade > 0) {
+          data.push([nome, codigo, quantidade]);
+        }
+      }
+
+      if (data.length === 1) {
+        alert("Nenhum item conferido para exportar.");
+        return;
+      }
+
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Conferidos");
+      XLSX.writeFile(wb, "conferidos.xlsx");
+    }
+
+    function limparConferencia() {
+      for (const codigo in produtos) {
+        produtos[codigo].quantidade = 0;
+      }
+      atualizarTabela();
+      salvarDados();
+      ultimaLeitura = null;
+    }
+
+    function limparProdutos() {
+      if (confirm("Tem certeza que deseja limpar todos os produtos cadastrados?")) {
+        produtos = {};
+        atualizarTabela();
+        salvarDados();
+      }
+    }
+
+    document.getElementById('importarExcel').addEventListener('change', function(e) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        for (let i = 1; i < json.length; i++) {
+          const [nome, codigo] = json[i];
+          if (nome && codigo && !produtos[codigo]) {
+            produtos[codigo] = { nome, quantidade: 0 };
+          }
+        }
+        atualizarTabela();
+        salvarDados();
+      };
+      reader.readAsArrayBuffer(e.target.files[0]);
+    });
+
+    // Corrigido: leitura funciona com tecla Enter
+    document.getElementById('scanner').addEventListener('keydown', function(e) {
+      if (e.key === "Enter") {
+        lerCodigo();
+      }
+    });
+  </script>
 </body>
 </html>
